@@ -13,4 +13,5 @@ func Register(router *gin.Engine) {
 	api := router.Group("/api")
 
 	api.GET("/ping", handler.PingPongHandler)
+	api.POST("user", handler.PushUser)
 }
