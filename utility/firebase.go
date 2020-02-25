@@ -24,7 +24,7 @@ func NewFirebase(ctx context.Context, databaseaURL string) *firebase.App {
 }
 
 /*
-NewDatabase returns a firebase database client
+NewDatabase returns a firebase firestore client
 */
 func NewDatabase(ctx context.Context, app *firebase.App) *firestore.Client {
 	client, err := app.Firestore(ctx)
