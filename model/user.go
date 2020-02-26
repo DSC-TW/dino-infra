@@ -9,5 +9,5 @@ type User struct {
 	Mail           string `json:"email" form:"mail"`
 	School         string `json:"school" form:"school"`
 	Department     string `json:"department" form:"department"`
-	IsAgreePrivacy bool   `json:"is_agreement_privacy" form:"is_agreement_privacy"`
+	IsAgreePrivacy bool   `json:"is_agree_privacy" form:"is_agree_privacy"`
 }
