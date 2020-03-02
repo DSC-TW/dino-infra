@@ -9,7 +9,6 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
 	"github.com/goinggo/mapstructure"
-	"google.golang.org/api/iterator"
 )
 
 const (
@@ -21,33 +20,28 @@ func getFireStoreClient(ctx context.Context) *firestore.Client {
 	return utility.NewDatabase(ctx, app)
 }
 
-func pushUserToFirestore(ctx context.Context, user model.User) (*firestore.WriteResult, error) {
+func pushUserToFirestore(ctx context.Context, user model.User) (string, error) {
 	client := getFireStoreClient(ctx)
 	collection := client.Collection("users")
-
-	return collection.NewDoc().Set(ctx, user)
+	doc := collection.NewDoc()
+	if _, err := collection.NewDoc().Set(ctx, user); err != nil {
+		return "", err
+	}
+	return doc.ID, nil
 }
 
-func getUserByMail(ctx context.Context, mail string) (model.User, error) {
+func getUserByID(ctx context.Context, ID string) (returnUser model.User, err error) {
+	var user model.User
 	client := getFireStoreClient(ctx)
 	collection := client.Collection("users")
-	docs := collection.Where("Mail", "==", mail).Limit(1).Documents(ctx)
-	var user model.User
-	iter := docs
+	doc, err := collection.Doc(ID).Get(ctx)
 
-	defer iter.Stop()
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return user, err
-		}
+	if err != nil {
+		return user, err
+	}
 
-		if err := mapstructure.Decode(doc.Data(), &user); err != nil {
-			return user, err
-		}
+	if err := mapstructure.Decode(doc.Data(), &user); err != nil {
+		return user, err
 	}
 	return user, nil
 }
@@ -60,10 +54,15 @@ func PushUser(c *gin.Context) {
 	ctx := context.Background()
 	c.BindJSON(&user)
 
-	if _, err := pushUserToFirestore(ctx, user); err != nil {
+	ID, err := pushUserToFirestore(ctx, user)
+	if err != nil {
+		log.Panicln(err)
 		c.Status(500)
+		return
 	}
-	c.Status(201)
+	c.JSON(201, gin.H{
+		"ID": ID,
+	})
 }
 
 /*
@@ -71,17 +70,16 @@ GetUser returns user by user's email
 */
 func GetUser(c *gin.Context) {
 	ctx := context.Background()
-	mail := c.DefaultQuery("mail", "no mail")
+	ID := c.DefaultQuery("ID", "no ID")
 
-	user, err := getUserByMail(ctx, mail)
+	user, err := getUserByID(ctx, ID)
 	if err != nil {
+		log.Panicln(err)
 		c.Status(500)
 		return
 	}
 
-	if mail == "" || user.Mail == "" {
-		log.Println("mail ", mail)
-		log.Println("user mail ", user.Mail)
+	if ID == "" {
 		c.Status(404)
 		return
 	}
