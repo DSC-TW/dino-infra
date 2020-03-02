@@ -15,4 +15,7 @@ func Register(router *gin.Engine) {
 	api.GET("/ping", handler.PingPongHandler)
 	api.POST("/user", handler.PushUser)
 	api.GET("/user", handler.GetUser)
+	api.POST("/score", handler.UpdateScore)
+	api.GET("/score", handler.GetScore)
+	api.GET("/rank", handler.GetRank)
 }

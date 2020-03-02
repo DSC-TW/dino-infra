@@ -13,6 +13,6 @@ func main() {
 
 	router.Register(httpServer)
 
-	serverAddr := "0.0.0.0:8080"
+	serverAddr := "localhost:8080"
 	httpServer.Run(serverAddr)
 }
