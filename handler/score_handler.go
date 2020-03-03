@@ -76,7 +76,7 @@ type scoreJSON struct {
 func getRank(ctx context.Context) ([]map[string]interface{}, error) {
 	client := getFireStoreClient(ctx)
 	collection := client.Collection("scores")
-	docs := collection.OrderBy("Score", firestore.Asc).Limit(10).Documents(ctx)
+	docs := collection.OrderBy("Score", firestore.Desc).Limit(10).Documents(ctx)
 	var scores []map[string]interface{}
 
 	for {
