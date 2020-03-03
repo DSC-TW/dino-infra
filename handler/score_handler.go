@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 
 	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
@@ -19,8 +18,6 @@ func UpdateScore(c *gin.Context) {
 	var json scoreJSON
 	c.BindJSON(&json)
 
-	log.Printf("%v", json)
-
 	code := updateScoreByID(ctx, json)
 
 	c.Status(code)
@@ -35,13 +32,11 @@ func GetScore(c *gin.Context) {
 
 	score, err := getScoreByID(ctx, ID)
 	if err != nil {
-		log.Panicln(err)
 		c.Status(500)
 		return
 	}
 	user, err := getUserByID(ctx, ID)
 	if err != nil {
-		log.Panicln(err)
 		c.Status(500)
 		return
 	}
@@ -60,7 +55,6 @@ func GetRank(c *gin.Context) {
 	ctx := context.Background()
 	scores, err := getRank(ctx)
 	if err != nil {
-		log.Panicln(err)
 		c.Status(500)
 		return
 	}
@@ -143,7 +137,6 @@ func getScoreIDByUserID(ctx context.Context, ID string) (string, error) {
 		if err != nil {
 			return scoreID, err
 		}
-		log.Println("ID: ", doc.Ref.ID)
 		scoreID = doc.Ref.ID
 	}
 	return scoreID, nil
@@ -154,21 +147,17 @@ func updateScoreByID(ctx context.Context, json scoreJSON) int {
 	collection := client.Collection("scores")
 
 	scoreID, err := getScoreIDByUserID(ctx, json.UserID)
-	log.Println("scoreID: ", scoreID)
 
 	if err != nil {
-		log.Panicln("cannot get scoreID", err)
 		return 500
 	}
 
 	if scoreID == "" {
 		if _, err := collection.NewDoc().Set(ctx, json); err != nil {
-			log.Panicln("cannot get collection ref at score", err)
 			return 500
 		}
 	} else {
 		if _, err := collection.Doc(scoreID).Update(ctx, []firestore.Update{{Path: "Score", Value: json.Score}}); err != nil {
-			log.Panicln("cannot get collection ref at user", err)
 			return 500
 		}
 	}
