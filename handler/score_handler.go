@@ -108,7 +108,7 @@ func getRank(ctx context.Context) ([]map[string]interface{}, error) {
 func getScoreByID(ctx context.Context, ID string) (score int, err error) {
 	client := getFireStoreClient(ctx)
 	collection := client.Collection("scores")
-	docs := collection.Where("ID", "==", ID).Limit(1).Documents(ctx)
+	docs := collection.Where("UserID", "==", ID).Limit(1).Documents(ctx)
 	var json scoreJSON
 
 	defer docs.Stop()
@@ -130,9 +130,11 @@ func getScoreByID(ctx context.Context, ID string) (score int, err error) {
 
 func getScoreIDByUserID(ctx context.Context, ID string) (string, error) {
 	client := getFireStoreClient(ctx)
-	docs := client.Collection("scores").Where("ID", "==", ID).Limit(1).Documents(ctx)
+	docs := client.Collection("scores").Where("UserID", "==", ID).Limit(1).Documents(ctx)
 	defer docs.Stop()
+
 	scoreID := ""
+
 	for {
 		doc, err := docs.Next()
 		if err == iterator.Done {
@@ -141,6 +143,7 @@ func getScoreIDByUserID(ctx context.Context, ID string) (string, error) {
 		if err != nil {
 			return scoreID, err
 		}
+		log.Println("ID: ", doc.Ref.ID)
 		scoreID = doc.Ref.ID
 	}
 	return scoreID, nil
@@ -151,11 +154,13 @@ func updateScoreByID(ctx context.Context, json scoreJSON) int {
 	collection := client.Collection("scores")
 
 	scoreID, err := getScoreIDByUserID(ctx, json.UserID)
+	log.Println("scoreID: ", scoreID)
 
 	if err != nil {
 		log.Panicln("cannot get scoreID", err)
 		return 500
 	}
+
 	if scoreID == "" {
 		if _, err := collection.NewDoc().Set(ctx, json); err != nil {
 			log.Panicln("cannot get collection ref at score", err)
