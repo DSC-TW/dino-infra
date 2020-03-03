@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 
 	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
@@ -19,8 +18,6 @@ func UpdateScore(c *gin.Context) {
 	var json scoreJSON
 	c.BindJSON(&json)
 
-	log.Printf("%v", json)
-
 	code := updateScoreByID(ctx, json)
 
 	c.Status(code)
@@ -35,13 +32,11 @@ func GetScore(c *gin.Context) {
 
 	score, err := getScoreByID(ctx, ID)
 	if err != nil {
-		log.Panicln(err)
 		c.Status(500)
 		return
 	}
 	user, err := getUserByID(ctx, ID)
 	if err != nil {
-		log.Panicln(err)
 		c.Status(500)
 		return
 	}
@@ -60,7 +55,6 @@ func GetRank(c *gin.Context) {
 	ctx := context.Background()
 	scores, err := getRank(ctx)
 	if err != nil {
-		log.Panicln(err)
 		c.Status(500)
 		return
 	}
@@ -76,7 +70,7 @@ type scoreJSON struct {
 func getRank(ctx context.Context) ([]map[string]interface{}, error) {
 	client := getFireStoreClient(ctx)
 	collection := client.Collection("scores")
-	docs := collection.OrderBy("Score", firestore.Asc).Limit(10).Documents(ctx)
+	docs := collection.OrderBy("Score", firestore.Desc).Limit(10).Documents(ctx)
 	var scores []map[string]interface{}
 
 	for {
@@ -108,7 +102,7 @@ func getRank(ctx context.Context) ([]map[string]interface{}, error) {
 func getScoreByID(ctx context.Context, ID string) (score int, err error) {
 	client := getFireStoreClient(ctx)
 	collection := client.Collection("scores")
-	docs := collection.Where("ID", "==", ID).Limit(1).Documents(ctx)
+	docs := collection.Where("UserID", "==", ID).Limit(1).Documents(ctx)
 	var json scoreJSON
 
 	defer docs.Stop()
@@ -130,9 +124,11 @@ func getScoreByID(ctx context.Context, ID string) (score int, err error) {
 
 func getScoreIDByUserID(ctx context.Context, ID string) (string, error) {
 	client := getFireStoreClient(ctx)
-	docs := client.Collection("scores").Where("ID", "==", ID).Limit(1).Documents(ctx)
+	docs := client.Collection("scores").Where("UserID", "==", ID).Limit(1).Documents(ctx)
 	defer docs.Stop()
+
 	scoreID := ""
+
 	for {
 		doc, err := docs.Next()
 		if err == iterator.Done {
@@ -153,17 +149,15 @@ func updateScoreByID(ctx context.Context, json scoreJSON) int {
 	scoreID, err := getScoreIDByUserID(ctx, json.UserID)
 
 	if err != nil {
-		log.Panicln("cannot get scoreID", err)
 		return 500
 	}
+
 	if scoreID == "" {
 		if _, err := collection.NewDoc().Set(ctx, json); err != nil {
-			log.Panicln("cannot get collection ref at score", err)
 			return 500
 		}
 	} else {
 		if _, err := collection.Doc(scoreID).Update(ctx, []firestore.Update{{Path: "Score", Value: json.Score}}); err != nil {
-			log.Panicln("cannot get collection ref at user", err)
 			return 500
 		}
 	}
