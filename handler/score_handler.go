@@ -28,7 +28,7 @@ GetScore will get score by user ID
 */
 func GetScore(c *gin.Context) {
 	ctx := context.Background()
-	ID := c.DefaultQuery("ID", "no ID")
+	ID := c.Param("ID")
 
 	score, err := getScoreByID(ctx, ID)
 	if err != nil {

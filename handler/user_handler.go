@@ -70,7 +70,7 @@ GetUser returns user by user's email
 */
 func GetUser(c *gin.Context) {
 	ctx := context.Background()
-	ID := c.DefaultQuery("ID", "no ID")
+	ID := c.Param("ID")
 
 	user, err := getUserByID(ctx, ID)
 	if err != nil {
