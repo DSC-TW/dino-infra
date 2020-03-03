@@ -2,6 +2,7 @@ package router
 
 import (
 	"dino-infra/handler"
+	"dino-infra/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +11,8 @@ import (
 Register is a place to register rotes
 */
 func Register(router *gin.Engine) {
+	router.Use(middleware.NewCORSMiddleware())
+
 	api := router.Group("/api")
 
 	api.GET("/ping", handler.PingPongHandler)
